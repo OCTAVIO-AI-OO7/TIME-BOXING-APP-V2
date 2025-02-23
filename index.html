@@ -57,18 +57,20 @@
     </style>
 </head>
 <body class="bg-gray-100 p-4">
-    <div id="root" class="container mx-auto max-w-7xl"></div>
+    <div id="root"></div>
 
-    <script type="text/babel">const { useState, useEffect } = React;
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
         const TimeBoxingApp = () => {
             const [activeTab, setActiveTab] = useState('weekly');
-            const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(new Date()));
+            const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(new Date(2025, 0, 1))); // Iniciamos en 2025
             const [tasks, setTasks] = useState([]);
             const [completedTasks, setCompletedTasks] = useState([]);
             const [darkMode, setDarkMode] = useState(false);
             const weekDays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
+            // Genera intervalos de 30 minutos
             function generateTimeSlots() {
                 const slots = [];
                 for (let i = 0; i < 24; i++) {
@@ -78,6 +80,7 @@
                 return slots;
             }
 
+            // Obtiene el lunes de la semana corriente
             function getMonday(d) {
                 d = new Date(d);
                 const day = d.getDay();
@@ -85,6 +88,7 @@
                 return new Date(d.setDate(diff));
             }
 
+            // Obtiene las fechas de la semana
             function getWeekDates() {
                 const week = [];
                 const startDate = new Date(currentWeekStart);
@@ -96,17 +100,14 @@
                 return week;
             }
 
+            // Formatea la fecha para mostrar
             function formatDisplayDate(dateStr) {
+                if (!dateStr) return '';
                 const date = new Date(dateStr);
                 return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
             }
-    const priorityOptions = [
-                { value: 'urgent_important', label: 'Urgente + Importante' },
-                { value: 'important_not_urgent', label: 'Importante + No Urgente' },
-                { value: 'urgent_not_important', label: 'Urgente + No Importante' },
-                { value: 'not_urgent_not_important', label: 'No Urgente + No Importante' }
-            ];
 
+            // Navegación entre semanas
             function goToPreviousWeek() {
                 const newDate = new Date(currentWeekStart);
                 newDate.setDate(currentWeekStart.getDate() - 7);
@@ -128,6 +129,15 @@
                 setCurrentWeekStart(getMonday(selectedDate));
             }
 
+            // Opciones de prioridad
+            const priorityOptions = [
+                { value: 'urgent_important', label: 'Urgente + Importante' },
+                { value: 'important_not_urgent', label: 'Importante + No Urgente' },
+                { value: 'urgent_not_important', label: 'Urgente + No Importante' },
+                { value: 'not_urgent_not_important', label: 'No Urgente + No Importante' }
+            ];
+
+            // Manejo de tareas
             const completeTask = (taskId) => {
                 const task = tasks.find(t => t.id === taskId);
                 if (task) {
@@ -168,7 +178,9 @@
                 setTasks(updatedTasks);
                 saveToLocalStorage(updatedTasks, completedTasks);
             };
-    const saveToLocalStorage = (currentTasks, finishedTasks) => {
+
+            // Local Storage
+            const saveToLocalStorage = (currentTasks, finishedTasks) => {
                 localStorage.setItem('timeBoxingTasks', JSON.stringify(currentTasks));
                 localStorage.setItem('timeBoxingCompletedTasks', JSON.stringify(finishedTasks));
                 localStorage.setItem('timeBoxingDarkMode', JSON.stringify(darkMode));
@@ -210,8 +222,9 @@
 
             const timeSlots = generateTimeSlots();
             const weekDates = getWeekDates();
-        return (
-                <div className={`w-full ${darkMode ? 'dark-mode' : 'bg-gray-100'}`}>
+
+            return (
+                <div className={`w-full ${darkMode ? 'dark-mode' : ''}`}>
                     <div className={`p-6 rounded-lg shadow-lg app-container ${darkMode ? '' : 'bg-white'}`}>
                         <div className="flex justify-between items-center mb-6">
                             <h1 className="text-2xl font-bold">Time Boxing - Planificación y Gestión del Tiempo</h1>
@@ -271,7 +284,8 @@
                                         className="p-2 border rounded"
                                     />
                                 </div>
-<div className="scrollable-table">
+
+                                <div className="scrollable-table">
                                     <table className="w-full border-collapse">
                                         <thead>
                                             <tr>
@@ -345,7 +359,8 @@
                                 </div>
                             </div>
                         )}
-{/* Pestaña de Registro de Tareas */}
+
+                        {/* Pestaña de Registro de Tareas */}
                         {activeTab === 'tasks' && (
                             <div className={`rounded-lg p-4 shadow card`}>
                                 <h2 className="text-xl font-semibold mb-4">Registro de Tareas</h2>
@@ -364,14 +379,11 @@
                                                     <div>{task.title || 'Sin título'}</div>
                                                     <div>{task.day} ({formatDisplayDate(task.date)})</div>
                                                     <div>{task.timeSlot}</div>
-                                                    <div>{priorityOptions.find(p => p.value === task.priority)?.label}</div>
-                                                    <div>
-                                                        <button
-                                                            className="bg-green-500 text-white p-1 rounded"
-                                                            onClick={() => completeTask(task.id)}
-                                                        >
-                                                            Completar
-                                                        </button>
+                                                    <div className={`${getPriorityColor(task.priority)} px-2 py-1 rounded text-center`}>
+                                                        {priorityOptions.find(p => p.value === task.priority)?.label}
+                                                    </div>
+                                                    <div className="status-ongoing px-2 py-1 rounded text-center">
+                                                        On-Going
                                                     </div>
                                                 </div>
                                             ))
@@ -385,7 +397,7 @@
                             </div>
                         )}
 
-                        {/* Pestaña de Registros */}
+                        {/* Pestaña de Registros Completados */}
                         {activeTab === 'registers' && (
                             <div className={`rounded-lg p-4 shadow card`}>
                                 <h2 className="text-xl font-semibold mb-4">Historial de Tareas Completadas</h2>
@@ -399,25 +411,94 @@
                                         <div>Fecha Completado</div>
                                     </div>
                                     <div className="max-h-96 overflow-y-auto">
-                                        {completedTasks.map(task => (
-                                            <div key={task.id} className="grid grid-cols-6 gap-4 items-center border-b pb-2">
-                                                <div>{task.title || 'Sin título'}</div>
-                                                <div>{task.day}</div>
-                                                <div>{task.timeSlot}</div>
-                                                <div>{priorityOptions.find(p => p.value === task.priority)?.label}</div>
-                                                <div className="status-done px-2 py-1 rounded text-center">
-                                                    {task.status}
+                                        {completedTasks.length > 0 ? (
+                                            completedTasks.map(task => (
+                                                <div key={task.id} className="grid grid-cols-6 gap-4 items-center border-b pb-2">
+                                                    <div>{task.title || 'Sin título'}</div>
+                                                    <div>{task.day}</div>
+                                                    <div>{task.timeSlot}</div>
+                                                    <div className={`${getPriorityColor(task.priority)} px-2 py-1 rounded text-center`}>
+                                                        {priorityOptions.find(p => p.value === task.priority)?.label}
+                                                    </div>
+                                                    <div className="status-done px-2 py-1 rounded text-center">
+                                                        {task.status}
+                                                    </div>
+                                                    <div>
+                                                        {formatDisplayDate(task.completedDate)}
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    {formatDisplayDate(task.completedDate)}
-                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-4 text-gray-500">
+                                                No hay tareas completadas
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         )}
-</div>
+
+                        {/* Pestaña de Matriz de Prioridades */}
+                        {activeTab === 'priorities' && (
+                            <div className={`rounded-lg p-4 shadow card`}>
+                                <h2 className="text-xl font-semibold mb-4">Matriz de Prioridades</h2>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className={`border rounded-lg p-4`}>
+                                        <h3 className="font-semibold mb-2">Urgente + Importante</h3>
+                                        <div className="bg-red-50 p-2 rounded min-h-32">
+                                            {tasks.filter(t => t.priority === 'urgent_important').map(task => (
+                                                <div key={task.id} className="mb-2 p-2 bg-red-100 rounded">
+                                                    <div className="font-medium">{task.title || 'Sin título'}</div>
+                                                    <div className="text-xs text-gray-600">
+                                                        {task.day} - {task.timeSlot}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className={`border rounded-lg p-4`}>
+                                        <h3 className="font-semibold mb-2">Importante + No Urgente</h3>
+                                        <div className="bg-yellow-50 p-2 rounded min-h-32">
+                                            {tasks.filter(t => t.priority === 'important_not_urgent').map(task => (
+                                                <div key={task.id} className="mb-2 p-2 bg-yellow-100 rounded">
+                                                    <div className="font-medium">{task.title || 'Sin título'}</div>
+                                                    <div className="text-xs text-gray-600">
+                                                        {task.day} - {task.timeSlot}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className={`border rounded-lg p-4`}>
+                                        <h3 className="font-semibold mb-2">Urgente + No Importante</h3>
+                                        <div className="bg-blue-50 p-2 rounded min-h-32">
+                                            {tasks.filter(t => t.priority === 'urgent_not_important').map(task => (
+                                                <div key={task.id} className="mb-2 p-2 bg-blue-100 rounded">
+                                                    <div className="font-medium">{task.title || 'Sin título'}</div>
+                                                    <div className="text-xs text-gray-600">
+                                                        {task.day} - {task.timeSlot}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className={`border rounded-lg p-4`}>
+                                        <h3 className="font-semibold mb-2">No Urgente + No Importante</h3>
+                                        <div className="bg-gray-50 p-2 rounded min-h-32">
+                                            {tasks.filter(t => t.priority === 'not_urgent_not_important').map(task => (
+                                                <div key={task.id} className="mb-2 p-2 bg-gray-100 rounded">
+                                                    <div className="font-medium">{task.title || 'Sin título'}</div>
+                                                    <div className="text-xs text-gray-600">
+                                                        {task.day} - {task.timeSlot}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             );
         };
@@ -425,4 +506,4 @@
         ReactDOM.render(<TimeBoxingApp />, document.getElementById('root'));
     </script>
 </body>
-</html>                        
+</html>
